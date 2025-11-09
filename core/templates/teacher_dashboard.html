@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - School Management System</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Teacher Dashboard</h1>
+            <div class="user-info">
+                <span>Welcome, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+            </div>
+        </div>
+        
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="{% url 'teacher_dashboard' %}" class="active">Dashboard</a></li>
+                <li><a href="{% url 'teacher_attendance_edit' %}">Update Attendance</a></li>
+                <li><a href="{% url 'teacher_assignment_edit' %}">Manage Assignments</a></li>
+            </ul>
+        </nav>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="card">
+            <h2>Quick Actions</h2>
+            <div style="display: flex; gap: 15px; margin-top: 15px;">
+                <a href="{% url 'teacher_attendance_edit' %}" class="btn btn-primary">Update Attendance</a>
+                <a href="{% url 'teacher_assignment_edit' %}" class="btn btn-secondary">Manage Assignments</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Student List</h2>
+            <p>Total Students: {{ students.count }}</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.student_id|default:"N/A" }}</td>
+                        <td>{{ student.user.get_full_name|default:student.user.username }}</td>
+                        <td>{{ student.user.username }}</td>
+                        <td>{{ student.user.email|default:"N/A" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No students found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+
