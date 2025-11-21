@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Marks - School Management System</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Update Student Marks</h1>
+            <div class="user-info">
+                <span>Welcome, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+            </div>
+        </div>
+        
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="{% url 'librarian_dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'librarian_marks_edit' %}" class="active">Update Marks</a></li>
+            </ul>
+        </nav>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="card">
+            <h2>Assignment Marks</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Assignment Title</th>
+                        <th>Student</th>
+                        <th>Assigned Date</th>
+                        <th>Due Date</th>
+                        <th>Marks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ assignment.title }}</td>
+                        <td>{{ assignment.student.user.username }}</td>
+                        <td>{{ assignment.assigned_date|date:"Y-m-d" }}</td>
+                        <td>{{ assignment.due_date|date:"Y-m-d"|default:"N/A" }}</td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                <input type="number" 
+                                       name="marks" 
+                                       value="{{ assignment.marks|default:'' }}" 
+                                       min="0" 
+                                       max="{{ assignment.max_marks }}"
+                                       step="0.01"
+                                       style="width: 80px; padding: 4px;">
+                                <span>/ {{ assignment.max_marks }}</span>
+                                <button type="submit" class="btn btn-small btn-success" style="margin-left: 5px;">Update</button>
+                            </form>
+                        </td>
+                        <td>
+                            <span class="{% if assignment.completion_status %}status-completed{% else %}status-pending{% endif %}">
+                                {% if assignment.completion_status %}Completed{% else %}Pending{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center;">No assignments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+

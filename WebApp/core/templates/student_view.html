@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - School Management System</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Student Dashboard</h1>
+            <div class="user-info">
+                <span>Welcome, {{ student.user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+            </div>
+        </div>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Attendance Percentage</h3>
+                <div class="stat-value">{{ attendance_percentage }}%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Present Days</h3>
+                <div class="stat-value">{{ present_count }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Days</h3>
+                <div class="stat-value">{{ total_attendance }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Assignments</h3>
+                <div class="stat-value">{{ assignments.count }}</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Attendance Records</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_records %}
+                    <tr>
+                        <td>{{ record.date|date:"Y-m-d" }}</td>
+                        <td>
+                            <span class="{% if record.present %}status-present{% else %}status-absent{% endif %}">
+                                {% if record.present %}Present{% else %}Absent{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" style="text-align: center;">No attendance records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>Assignments</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Assigned Date</th>
+                        <th>Due Date</th>
+                        <th>Marks</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>
+                            <strong>{{ assignment.title }}</strong>
+                            {% if assignment.description %}
+                            <br><small style="color: #666;">{{ assignment.description }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ assignment.assigned_date|date:"Y-m-d" }}</td>
+                        <td>{{ assignment.due_date|date:"Y-m-d"|default:"N/A" }}</td>
+                        <td>
+                            {% if assignment.marks %}
+                                {{ assignment.marks }} / {{ assignment.max_marks }}
+                            {% else %}
+                                <span style="color: #999;">Not graded</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="{% if assignment.completion_status %}status-completed{% else %}status-pending{% endif %}">
+                                {% if assignment.completion_status %}Completed{% else %}Pending{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">No assignments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+
