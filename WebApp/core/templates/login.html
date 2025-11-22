@@ -32,6 +32,15 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
+            
+            <div style="margin-top: 20px; text-align: center; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p style="color: #666; margin-bottom: 15px;">Don't have an account? Sign up as:</p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a href="{% url 'signup_student' %}" style="color: #667eea; text-decoration: none; padding: 8px 12px; border: 1px solid #667eea; border-radius: 4px; font-size: 14px;">Student</a>
+                    <a href="{% url 'signup_teacher' %}" style="color: #667eea; text-decoration: none; padding: 8px 12px; border: 1px solid #667eea; border-radius: 4px; font-size: 14px;">Teacher</a>
+                    <a href="{% url 'signup_librarian' %}" style="color: #667eea; text-decoration: none; padding: 8px 12px; border: 1px solid #667eea; border-radius: 4px; font-size: 14px;">Librarian</a>
+                </div>
+            </div>
         </div>
     </div>
 </body>

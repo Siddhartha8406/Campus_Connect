@@ -5,6 +5,9 @@ urlpatterns = [
     path('', views.login_view, name='login'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('signup/student/', views.signup_student, name='signup_student'),
+    path('signup/teacher/', views.signup_teacher, name='signup_teacher'),
+    path('signup/librarian/', views.signup_librarian, name='signup_librarian'),
     path('dashboard/', views.dashboard, name='dashboard'),
     
     # Teacher routes

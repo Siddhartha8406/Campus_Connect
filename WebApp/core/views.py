@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from datetime import datetime
 from .models import CustomUser, Attendance, Assignment, StudentProfile
 
 
@@ -27,6 +28,119 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+def signup_student(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+        student_id = request.POST.get('student_id', '')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        
+        if password != password_confirm:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'signup_student.html')
+        
+        if CustomUser.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+            return render(request, 'signup_student.html')
+        
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            role='student',
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        StudentProfile.objects.create(
+            user=user,
+            student_id=student_id if student_id else None
+        )
+        
+        messages.success(request, 'Account created successfully! Please login.')
+        return redirect('login')
+    
+    return render(request, 'signup_student.html')
+
+
+def signup_teacher(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        
+        if password != password_confirm:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'signup_teacher.html')
+        
+        if CustomUser.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+            return render(request, 'signup_teacher.html')
+        
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            role='teacher',
+            first_name=first_name,
+            last_name=last_name,
+            is_staff=True
+        )
+        
+        messages.success(request, 'Account created successfully! Please login.')
+        return redirect('login')
+    
+    return render(request, 'signup_teacher.html')
+
+
+def signup_librarian(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        
+        if password != password_confirm:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'signup_librarian.html')
+        
+        if CustomUser.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+            return render(request, 'signup_librarian.html')
+        
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            role='librarian',
+            first_name=first_name,
+            last_name=last_name,
+            is_staff=True
+        )
+        
+        messages.success(request, 'Account created successfully! Please login.')
+        return redirect('login')
+    
+    return render(request, 'signup_librarian.html')
 
 
 @login_required
@@ -66,40 +180,99 @@ def teacher_attendance_edit(request):
     
     students = StudentProfile.objects.all()
     
-    if request.method == 'POST':
-        date = request.POST.get('date', timezone.now().date())
-        for student in students:
-            present = request.POST.get(f'present_{student.id}', 'off') == 'on'
-            attendance, created = Attendance.objects.get_or_create(
-                student=student,
-                date=date,
-                defaults={'present': present}
-            )
-            if not created:
-                attendance.present = present
-                attendance.save()
-        
-        messages.success(request, 'Attendance updated successfully.')
-        return redirect('teacher_attendance_edit')
+    # Get selected date from GET or POST, default to today
+    selected_date = timezone.now().date()
+    if request.method == 'GET' and 'date' in request.GET:
+        try:
+            selected_date = datetime.strptime(request.GET.get('date'), '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            selected_date = timezone.now().date()
     
-    # Get today's date for default
-    today = timezone.now().date()
-    # Get attendance for today and create a list with student and attendance status
+    if request.method == 'POST':
+        date_str = request.POST.get('date', '')
+        if date_str:
+            try:
+                selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                selected_date = timezone.now().date()
+        else:
+            selected_date = timezone.now().date()
+        
+        # Handle bulk actions
+        bulk_action = request.POST.get('bulk_action')
+        if bulk_action == 'mark_all_present':
+            for student in students:
+                attendance, created = Attendance.objects.get_or_create(
+                    student=student,
+                    date=selected_date,
+                    defaults={'present': True}
+                )
+                if not created:
+                    attendance.present = True
+                    attendance.save()
+            messages.success(request, f'All students marked as present for {selected_date}.')
+        elif bulk_action == 'mark_all_absent':
+            for student in students:
+                attendance, created = Attendance.objects.get_or_create(
+                    student=student,
+                    date=selected_date,
+                    defaults={'present': False}
+                )
+                if not created:
+                    attendance.present = False
+                    attendance.save()
+            messages.success(request, f'All students marked as absent for {selected_date}.')
+        else:
+            # Handle individual student attendance
+            for student in students:
+                present = request.POST.get(f'present_{student.id}', 'off') == 'on'
+                attendance, created = Attendance.objects.get_or_create(
+                    student=student,
+                    date=selected_date,
+                    defaults={'present': present}
+                )
+                if not created:
+                    attendance.present = present
+                    attendance.save()
+            
+            messages.success(request, f'Attendance updated successfully for {selected_date}.')
+        
+        # Redirect to the same date
+        return redirect(f'{request.path}?date={selected_date}')
+    
+    # Get attendance for selected date
     students_with_attendance = []
+    present_count = 0
+    absent_count = 0
+    
     for student in students:
         try:
-            att = Attendance.objects.get(student=student, date=today)
+            att = Attendance.objects.get(student=student, date=selected_date)
             is_present = att.present
         except Attendance.DoesNotExist:
             is_present = False
+        
+        if is_present:
+            present_count += 1
+        else:
+            absent_count += 1
+        
         students_with_attendance.append({
             'student': student,
             'is_present': is_present
         })
     
+    total_students = len(students_with_attendance)
+    attendance_percentage = (present_count / total_students * 100) if total_students > 0 else 0
+    
     context = {
         'students_with_attendance': students_with_attendance,
-        'today': today,
+        'selected_date': selected_date,
+        'today': timezone.now().date(),
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'total_students': total_students,
+        'attendance_percentage': round(attendance_percentage, 1),
         'user': request.user
     }
     return render(request, 'teacher_attendance_edit.html', context)
@@ -174,20 +347,17 @@ def student_view(request):
         messages.error(request, 'Student profile not found.')
         return redirect('dashboard')
     
-    attendance_records = Attendance.objects.filter(student=student).order_by('-date')[:30]
-    assignments = Assignment.objects.filter(student=student).order_by('-assigned_date')
+    # Get all attendance records for calculations (before slicing)
+    all_attendance_records = Attendance.objects.filter(student=student).order_by('-date')
     
-    # Calculate attendance percentage
-    total_attendance = attendance_records.count()
-    print("[LOG] Total attendance records:", total_attendance)
-    present_count = attendance_records.values('present')
-    count = 0
-    for i in present_count:
-        if i['present']:
-            count += 1
-    present_count = count
-    print("[LOG] Attendance values:", present_count)
+    # Calculate attendance percentage from full QuerySet
+    total_attendance = all_attendance_records.count()
+    present_count = all_attendance_records.filter(present=True).count()
     attendance_percentage = (present_count / total_attendance * 100) if total_attendance > 0 else 0
+    
+    # Slice for display (only show last 30 records)
+    attendance_records = all_attendance_records[:30]
+    assignments = Assignment.objects.filter(student=student).order_by('-assigned_date')
     
     context = {
         'student': student,

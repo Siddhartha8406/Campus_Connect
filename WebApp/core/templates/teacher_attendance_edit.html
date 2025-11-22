@@ -6,6 +6,97 @@
     <title>Update Attendance - School Management System</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .attendance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-box.present {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .stat-box.absent {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        }
+        .stat-box.percentage {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+        .stat-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .stat-box .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .bulk-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .bulk-actions .btn-mark-all-present {
+            background-color: #28a745;
+            color: white;
+        }
+        .bulk-actions .btn-mark-all-present:hover {
+            background-color: #218838;
+        }
+        .bulk-actions .btn-mark-all-absent {
+            background-color: #dc3545;
+            color: white;
+        }
+        .bulk-actions .btn-mark-all-absent:hover {
+            background-color: #c82333;
+        }
+        .date-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .date-navigation button {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .date-navigation button:hover {
+            background-color: #5a6268;
+        }
+        .attendance-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .table-row-present {
+            background-color: #d4edda !important;
+        }
+        .table-row-absent {
+            background-color: #f8d7da !important;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -35,11 +126,52 @@
         
         <div class="card">
             <h2>Mark Attendance</h2>
-            <form method="post">
-                {% csrf_token %}
+            
+            <form method="get" id="dateForm" style="margin-bottom: 20px;">
                 <div class="form-group">
-                    <label for="date">Date</label>
-                    <input type="date" id="date" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                    <label for="date">Select Date</label>
+                    <div class="date-navigation">
+                        <button type="button" onclick="changeDate(-1)">← Previous Day</button>
+                        <input type="date" id="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" required 
+                               onchange="document.getElementById('dateForm').submit()" style="flex: 1; max-width: 200px;">
+                        <button type="button" onclick="changeDate(1)">Next Day →</button>
+                        {% if selected_date != today %}
+                        <button type="button" onclick="goToToday()">Today</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+            
+            <div class="attendance-stats">
+                <div class="stat-box present">
+                    <h3>Present</h3>
+                    <p class="stat-value">{{ present_count }}</p>
+                </div>
+                <div class="stat-box absent">
+                    <h3>Absent</h3>
+                    <p class="stat-value">{{ absent_count }}</p>
+                </div>
+                <div class="stat-box percentage">
+                    <h3>Attendance Rate</h3>
+                    <p class="stat-value">{{ attendance_percentage }}%</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Total Students</h3>
+                    <p class="stat-value">{{ total_students }}</p>
+                </div>
+            </div>
+            
+            <form method="post" id="attendanceForm">
+                {% csrf_token %}
+                <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                
+                <div class="bulk-actions">
+                    <button type="submit" name="bulk_action" value="mark_all_present" class="btn-mark-all-present">
+                        Mark All Present
+                    </button>
+                    <button type="submit" name="bulk_action" value="mark_all_absent" class="btn-mark-all-absent">
+                        Mark All Absent
+                    </button>
                 </div>
                 
                 <table class="table">
@@ -48,34 +180,77 @@
                             <th>Student ID</th>
                             <th>Name</th>
                             <th>Username</th>
+                            <th>Status</th>
                             <th>Present</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in students_with_attendance %}
-                        <tr>
+                        <tr class="{% if item.is_present %}table-row-present{% else %}table-row-absent{% endif %}">
                             <td>{{ item.student.student_id|default:"N/A" }}</td>
                             <td>{{ item.student.user.get_full_name|default:item.student.user.username }}</td>
                             <td>{{ item.student.user.username }}</td>
                             <td>
+                                <span class="{% if item.is_present %}status-present{% else %}status-absent{% endif %}">
+                                    {% if item.is_present %}✓ Present{% else %}✗ Absent{% endif %}
+                                </span>
+                            </td>
+                            <td>
                                 <input type="checkbox" 
                                        name="present_{{ item.student.id }}" 
                                        id="present_{{ item.student.id }}"
-                                       {% if item.is_present %}checked{% endif %}>
+                                       class="attendance-checkbox"
+                                       {% if item.is_present %}checked{% endif %}
+                                       onchange="updateRowColor(this)">
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="4" style="text-align: center;">No students found.</td>
+                            <td colspan="5" style="text-align: center;">No students found.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
                 
-                <button type="submit" class="btn btn-primary">Save Attendance</button>
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">Save Attendance</button>
+                </div>
             </form>
         </div>
     </div>
+    
+    <script>
+        function changeDate(days) {
+            const dateInput = document.getElementById('date');
+            const currentDate = new Date(dateInput.value);
+            currentDate.setDate(currentDate.getDate() + days);
+            dateInput.value = currentDate.toISOString().split('T')[0];
+            document.getElementById('dateForm').submit();
+        }
+        
+        function goToToday() {
+            const dateInput = document.getElementById('date');
+            const today = new Date();
+            dateInput.value = today.toISOString().split('T')[0];
+            document.getElementById('dateForm').submit();
+        }
+        
+        function updateRowColor(checkbox) {
+            const row = checkbox.closest('tr');
+            const statusCell = row.querySelector('td:nth-child(4)');
+            const statusSpan = statusCell.querySelector('span');
+            
+            if (checkbox.checked) {
+                row.className = 'table-row-present';
+                statusSpan.className = 'status-present';
+                statusSpan.textContent = '✓ Present';
+            } else {
+                row.className = 'table-row-absent';
+                statusSpan.className = 'status-absent';
+                statusSpan.textContent = '✗ Absent';
+            }
+        }
+    </script>
 </body>
 </html>
 
