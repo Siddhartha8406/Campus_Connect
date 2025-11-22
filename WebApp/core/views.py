@@ -179,7 +179,14 @@ def student_view(request):
     
     # Calculate attendance percentage
     total_attendance = attendance_records.count()
-    present_count = attendance_records.filter(present=True).count()
+    print("[LOG] Total attendance records:", total_attendance)
+    present_count = attendance_records.values('present')
+    count = 0
+    for i in present_count:
+        if i['present']:
+            count += 1
+    present_count = count
+    print("[LOG] Attendance values:", present_count)
     attendance_percentage = (present_count / total_attendance * 100) if total_attendance > 0 else 0
     
     context = {
