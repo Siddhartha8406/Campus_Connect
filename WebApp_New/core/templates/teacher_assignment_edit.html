@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Assignments - School Management System</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Manage Assignments</h1>
+            <div class="user-info">
+                <span>Welcome, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+            </div>
+        </div>
+        
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'teacher_attendance_edit' %}">Update Attendance</a></li>
+                <li><a href="{% url 'teacher_assignment_edit' %}" class="active">Manage Assignments</a></li>
+            </ul>
+        </nav>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="assignment-form">
+            <h3>Create New Assignment</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <div class="form-group">
+                    <label for="title">Assignment Title</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="due_date">Due Date</label>
+                        <input type="date" id="due_date" name="due_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="max_marks">Max Marks</label>
+                        <input type="number" id="max_marks" name="max_marks" value="100" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assign to Students</label>
+                    <div class="students-checkboxes">
+                        {% for student in students %}
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="students" value="{{ student.id }}" id="student_{{ student.id }}">
+                            <label for="student_{{ student.id }}">{{ student.user.username }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Assignment</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h2>Existing Assignments</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Student</th>
+                        <th>Assigned Date</th>
+                        <th>Due Date</th>
+                        <th>Marks</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ assignment.title }}</td>
+                        <td>{{ assignment.student.user.username }}</td>
+                        <td>{{ assignment.assigned_date|date:"Y-m-d" }}</td>
+                        <td>{{ assignment.due_date|date:"Y-m-d"|default:"N/A" }}</td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_marks">
+                                <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                <input type="number" 
+                                       name="marks" 
+                                       value="{{ assignment.marks|default:'' }}" 
+                                       min="0" 
+                                       max="{{ assignment.max_marks }}"
+                                       step="0.01"
+                                       style="width: 80px; padding: 4px;">
+                                <span>/ {{ assignment.max_marks }}</span>
+                                <button type="submit" class="btn btn-small btn-success" style="margin-left: 5px;">Update</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_status">
+                                <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                <input type="checkbox" 
+                                       name="completion_status" 
+                                       {% if assignment.completion_status %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                                <span class="{% if assignment.completion_status %}status-completed{% else %}status-pending{% endif %}">
+                                    {% if assignment.completion_status %}Completed{% else %}Pending{% endif %}
+                                </span>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center;">No assignments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+
