@@ -7,95 +7,63 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        .attendance-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .stat-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
+        /* Shared design from teacher_dashboard / student_view */
+        .container { max-width: 1100px; margin: 24px auto; }
+        .dashboard-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .nav-menu { margin-bottom: 16px; }
+        .nav-menu ul { list-style:none; padding:0; display:flex; gap:12px; }
+        .nav-menu a { text-decoration:none; padding:8px 12px; border-radius:6px; color:#06415a; background:transparent; }
+        .nav-menu a.active { background:#376278; }
+        .quick-actions .btn { padding:8px 12px; border-radius:6px; text-decoration:none; display:inline-block; }
+        .btn-primary { background:#0b6fb5; color:#fff; border:none; padding:10px 14px; border-radius:6px; }
+        .btn-secondary { background:#7aa6c8; color:#fff; border:none; padding:10px 14px; border-radius:6px; }
+
+        .card {
+            background-color: #eef8ff;
             border-radius: 8px;
-            text-align: center;
+            padding: 14px;
+            color: #08314a;
+            box-shadow: 0 1px 3px rgba(10,30,40,0.06);
+            margin-bottom: 14px;
         }
-        .stat-box.present {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+
+        .stat-card {
+            background-color:#ffffff;
+            border-radius:8px;
+            padding:14px;
+            color:#08314a;
+            border: 1px solid #e6f6ff;
         }
-        .stat-box.absent {
-            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        }
-        .stat-box.percentage {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        }
-        .stat-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        .stat-box .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0;
-        }
-        .bulk-actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .bulk-actions button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        .bulk-actions .btn-mark-all-present {
-            background-color: #28a745;
-            color: white;
-        }
-        .bulk-actions .btn-mark-all-present:hover {
-            background-color: #218838;
-        }
-        .bulk-actions .btn-mark-all-absent {
-            background-color: #dc3545;
-            color: white;
-        }
-        .bulk-actions .btn-mark-all-absent:hover {
-            background-color: #c82333;
-        }
-        .date-navigation {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .date-navigation button {
-            padding: 8px 16px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .date-navigation button:hover {
-            background-color: #5a6268;
-        }
-        .attendance-checkbox {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-        .table-row-present {
-            background-color: #d4edda !important;
-        }
-        .table-row-absent {
-            background-color: #f8d7da !important;
-        }
+        .stat-card h3 { font-size:14px; color:#06415a; margin:0 0 8px 0; }
+        .stat-card .stat-value { font-size:28px; font-weight:700; color:#042b3a; margin-top:6px; }
+
+        .table { width:100%; border-collapse: collapse; margin-top:12px; background:#fff; border-radius:6px; overflow:hidden; }
+        .table thead { background: linear-gradient(90deg,#cfeefd, #e6f7ff); }
+        .table th, .table td { text-align:left; padding:10px 12px; border-bottom:1px solid #eefbff; color:#08314a; font-size:14px; }
+        .table tbody tr:last-child td { border-bottom: none; }
+
+        .layout { display:flex; gap:20px; align-items:flex-start; }
+        .main-content { flex:1; }
+        .user-info { display:flex; gap:12px; align-items:center; }
+        .messages { list-style:none; padding:0; margin:8px 0; }
+        .messages li { padding:8px 10px; border-radius:6px; margin-bottom:6px; background:#fff; }
+
+        /* Attendance specific */
+        .present-badge { color:#155724; background:#d4edda; padding:6px 8px; border-radius:6px; display:inline-block; }
+        .absent-badge { color:#721c24; background:#f8d7da; padding:6px 8px; border-radius:6px; display:inline-block; }
+        .table-row-present { background-color: #f0fcf5; }
+        .table-row-absent { background-color: #fff6f7; }
+
+        .bulk-actions { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        .bulk-actions button { font-size:14px; cursor:pointer; border-radius:6px; padding:10px 14px; }
+        .btn-mark-all-present { background:#28a745; color:#fff; border:none; }
+        .btn-mark-all-absent { background:#dc3545; color:#fff; border:none; }
+
+        .date-navigation { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+        .date-navigation button { padding:8px 12px; background:#376278; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+        .date-navigation button:hover { opacity:0.95; }
+
+        .attendance-checkbox { width:20px; height:20px; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -103,7 +71,7 @@
         <div class="dashboard-header">
             <h1>Update Attendance</h1>
             <div class="user-info">
-                <span>Welcome, {{ user.username }}</span>
+                <span>Welcome, {{ user.first_name }} {{ user.last_name }}</span>
                 <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
             </div>
         </div>
@@ -127,13 +95,13 @@
         <div class="card">
             <h2>Mark Attendance</h2>
             
-            <form method="get" id="dateForm" style="margin-bottom: 20px;">
+            <form method="get" id="dateForm" style="margin-bottom: 12px;">
                 <div class="form-group">
                     <label for="date">Select Date</label>
-                    <div class="date-navigation">
+                    <div class="date-navigation" style="margin-top:6px;">
                         <button type="button" onclick="changeDate(-1)">← Previous Day</button>
                         <input type="date" id="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" required 
-                               onchange="document.getElementById('dateForm').submit()" style="flex: 1; max-width: 200px;">
+                               onchange="document.getElementById('dateForm').submit()" style="flex:1; max-width:220px; padding:8px 10px; border-radius:6px; border:1px solid #dfeff6;">
                         <button type="button" onclick="changeDate(1)">Next Day →</button>
                         {% if selected_date != today %}
                         <button type="button" onclick="goToToday()">Today</button>
@@ -141,27 +109,27 @@
                     </div>
                 </div>
             </form>
-            
-            <div class="attendance-stats">
-                <div class="stat-box present">
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:12px;">
+                <div class="stat-card">
                     <h3>Present</h3>
-                    <p class="stat-value">{{ present_count }}</p>
+                    <div class="stat-value">{{ present_count }}</div>
                 </div>
-                <div class="stat-box absent">
+                <div class="stat-card">
                     <h3>Absent</h3>
-                    <p class="stat-value">{{ absent_count }}</p>
+                    <div class="stat-value">{{ absent_count }}</div>
                 </div>
-                <div class="stat-box percentage">
+                <div class="stat-card">
                     <h3>Attendance Rate</h3>
-                    <p class="stat-value">{{ attendance_percentage }}%</p>
+                    <div class="stat-value">{{ attendance_percentage }}%</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-card">
                     <h3>Total Students</h3>
-                    <p class="stat-value">{{ total_students }}</p>
+                    <div class="stat-value">{{ total_students }}</div>
                 </div>
             </div>
             
-            <form method="post" id="attendanceForm">
+            <form method="post" id="attendanceForm" style="margin-top:14px;">
                 {% csrf_token %}
                 <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
                 
@@ -177,11 +145,11 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Username</th>
-                            <th>Status</th>
-                            <th>Present</th>
+                            <th style="width:12%;">Student ID</th>
+                            <th style="width:36%;">Name</th>
+                            <th style="width:20%;">Username</th>
+                            <th style="width:16%;">Status</th>
+                            <th style="width:16%;">Present</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -191,9 +159,11 @@
                             <td>{{ item.student.user.get_full_name|default:item.student.user.username }}</td>
                             <td>{{ item.student.user.username }}</td>
                             <td>
-                                <span class="{% if item.is_present %}status-present{% else %}status-absent{% endif %}">
-                                    {% if item.is_present %}✓ Present{% else %}✗ Absent{% endif %}
-                                </span>
+                                {% if item.is_present %}
+                                    <span class="present-badge">✓ Present</span>
+                                {% else %}
+                                    <span class="absent-badge">✗ Absent</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <input type="checkbox" 
@@ -212,8 +182,8 @@
                     </tbody>
                 </table>
                 
-                <div style="margin-top: 20px;">
-                    <button type="submit" class="btn btn-primary">Save Attendance</button>
+                <div style="margin-top: 16px;">
+                    <button type="submit" class="btn-primary">Save Attendance</button>
                 </div>
             </form>
         </div>
@@ -238,16 +208,14 @@
         function updateRowColor(checkbox) {
             const row = checkbox.closest('tr');
             const statusCell = row.querySelector('td:nth-child(4)');
-            const statusSpan = statusCell.querySelector('span');
+            const badge = statusCell.querySelector('span');
             
             if (checkbox.checked) {
                 row.className = 'table-row-present';
-                statusSpan.className = 'status-present';
-                statusSpan.textContent = '✓ Present';
+                if (badge) { badge.className = 'present-badge'; badge.textContent = '✓ Present'; }
             } else {
                 row.className = 'table-row-absent';
-                statusSpan.className = 'status-absent';
-                statusSpan.textContent = '✗ Absent';
+                if (badge) { badge.className = 'absent-badge'; badge.textContent = '✗ Absent'; }
             }
         }
     </script>

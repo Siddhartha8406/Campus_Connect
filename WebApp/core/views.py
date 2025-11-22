@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime
 from .models import CustomUser, Attendance, Assignment, StudentProfile
+from .ai_agent import predict_from_params
+
 
 
 def login_view(request):
@@ -365,8 +367,20 @@ def student_view(request):
         'assignments': assignments,
         'attendance_percentage': round(attendance_percentage, 2),
         'present_count': present_count,
-        'total_attendance': total_attendance
+        'total_attendance': total_attendance,
+        'user': request.user,
+        'projected_cgpa': None
     }
+    try:
+        params = { 'attendance_percentage': attendance_percentage, 'present_count': present_count, 'total_attendance': total_attendance }
+        print("HERE")
+        pred = predict_from_params(params)
+        context['projected_cgpa'] = int(round(float(pred), 2))/10
+    except Exception as e:
+        print("[ERROR]: ", e)
+        context['projected_cgpa'] = round((attendance_percentage / 20), 2)
+    
+
     return render(request, 'student_view.html', context)
 
 
