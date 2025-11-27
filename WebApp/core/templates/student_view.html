@@ -141,6 +141,46 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <div class="card">
+                    <h2>Performance/Marks</h2>
+                    {% if marks_records %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Teacher</th>
+                                <th>Test 1</th>
+                                <th>Test 2</th>
+                                <th>Test 3</th>
+                                <th>Assignment</th>
+                                <th>Attendance</th>
+                                <th>Total Marks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mark in marks_records %}
+                            <tr>
+                                <td>
+                                    <strong>{{ mark.teacher.get_full_name|default:mark.teacher.username }}</strong>
+                                </td>
+                                <td>{{ mark.test_1 }}</td>
+                                <td>{{ mark.test_2 }}</td>
+                                <td>{{ mark.test_3 }}</td>
+                                <td>{{ mark.assignment }}</td>
+                                <td>{{ mark.attendance }}</td>
+                                <td>
+                                    <strong style="color: #2c3e50;">{{ mark.get_total_marks }}</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No performance records found.</td>
+                    </tr>
+                    {% endif %}
+                </div>
             </main>
         </div>
     </div>

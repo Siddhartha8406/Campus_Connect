@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime
-from .models import CustomUser, Attendance, Assignment, StudentProfile
+from .models import CustomUser, Attendance, Assignment, StudentProfile, Performance
 from .ai_agent import predict_from_params
 
 
@@ -361,10 +361,14 @@ def student_view(request):
     attendance_records = all_attendance_records[:30]
     assignments = Assignment.objects.filter(student=student).order_by('-assigned_date')
     
+    # Get Performance/Marks data for the student
+    Performance = Performance.objects.filter(student=student).select_related('teacher')
+    
     context = {
         'student': student,
         'attendance_records': attendance_records,
         'assignments': assignments,
+        'marks_records': Performance,
         'attendance_percentage': round(attendance_percentage, 2),
         'present_count': present_count,
         'total_attendance': total_attendance,

@@ -57,3 +57,17 @@ class Attendance(models.Model):
     def __str__(self):
         status = "Present" if self.present else "Absent"
         return f"{self.student.user.username} - {self.date} - {status}"
+
+
+class Performance(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='marks')
+    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='marks_given', limit_choices_to={'role': 'teacher'})
+    test_1 = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    test_2 = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    test_3 = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    class Meta:
+        unique_together = ['student', 'teacher']
+    
+    def __str__(self):
+        return f"{self.student.user.username} - {self.teacher.username} - Marks"
